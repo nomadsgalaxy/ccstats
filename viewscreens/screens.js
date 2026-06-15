@@ -990,12 +990,20 @@ function drawOptDisplay(P, d){
   const C=P.pal;
   chrome(P, 'DISPLAY', 'OPTIONS');
   seclabel(P, 'PREFERENCES', SECLABEL_Y);
-  const rows=[['TOKENS DEFAULT','WITHOUT CACHE'],['BOOT SCREEN','AVATAR'],['ANIMATION SPEED','1.0X'],
-    ['BRIGHTNESS','100%'],['AVATAR LINE 1','MY SESSION'],['AVATAR LINE 2','DAILY STATS'],['RESET DEFAULTS','>']];
-  const LIST_Y=44, PITCH=23, BOXH=18;
-  rows.forEach((r,i)=>{ const y=LIST_Y+i*PITCH; optBox(P, y, BOXH);
-    P.text(r[0], 10, y+5, C.cream, 'rowLabel', {sp:1});                            // label (Aurora 24 @9)
-    P.text(r[1], 308, y+5, C.a1, 'rowLabel', {align:'r'}); });                     // value (Aurora 24 @9)
+  // Mirrors the firmware DISPLAY editor (screens_options.draw_options_display) at
+  // its default settings. The full preferences list is 13 rows; the device shows
+  // DISPLAY_VISIBLE_ROWS (10) at a time and scrolls the rest (like SCREENS), so
+  // this static mirror shows the first window (rows 1-10) + the windowed count.
+  const rows=[['TOKENS DEFAULT','WITHOUT CACHE'],['BOOT SCREEN','CLAUDE CODE'],['FONT PRESET','PRESET1'],
+    ['ANIMATION SPEED','1.0X'],['BRIGHTNESS','85%'],['DIM ON BATTERY','ON'],['AVATAR LINE 1','MY SESSION'],
+    ['AVATAR LINE 2','DAILY STATS'],['BATTERY SAVER','ON'],['AUTO BOOT','ON'],['DEMO MODE','>'],
+    ['RESET DEFAULTS','>'],['ABOUT','>']];
+  const LIST_Y=44, PITCH=18, BOXH=16, MAXROWS=10;                                 // device pitch/box (web was 23/18 — too tall)
+  P.text('1-'+Math.min(MAXROWS,rows.length)+' / '+rows.length, 314, SECLABEL_Y,   // windowed row count (over the section dashes)
+    C.creamD, 'caption', {sp:1, align:'r'});
+  rows.slice(0,MAXROWS).forEach((r,i)=>{ const y=LIST_Y+i*PITCH; optBox(P, y, BOXH);
+    P.text(r[0], 10, y+4, C.cream, 'rowLabel', {sp:1});                           // label (firmware OPTION_LABEL_X 10, y+4)
+    P.text(r[1], 308, y+4, C.a1, 'rowLabel', {align:'r'}); });                    // value (firmware OPTION_VALUE_RIGHT_X 308)
 }
 function drawOptScreens(P, d){
   const C=P.pal;
