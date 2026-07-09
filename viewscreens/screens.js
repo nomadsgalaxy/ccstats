@@ -504,39 +504,27 @@ function oppRow(P, y, label, util, resetStr, n){
   P.text(util!=null?Math.round(util)+'%':'-', ROW_VAL_R, y, accentPen(C,n).c, 'rowValue', {align:'r'});
 }
 function drawUsage(P, d){
-  const C=P.pal, L=d.limits||{}, sess=L.session||{}, wk=L.weekly||{};
-  chrome(P, 'USAGE LIMITS', '');   // top-right intentionally blank (set SHOW_CONN=true for a LIVE/STALE chip)
-  if(SHOW_CONN){
-    const spx=320-6-16, age=L.generated_at?(Date.now()-Date.parse(L.generated_at))/60000:999;
-    const fresh=!L.stale && age>=0 && age<10, cc=fresh?C.green:C.creamD, ctext=fresh?'LIVE':'STALE';
-    const tw=P.textW(ctext, (P.scale.tag&&P.scale.tag.px)||5, 1);
-    P.text(ctext, spx-7, 9, cc, 'tag', {sp:1, align:'r'});
-    P.rect(spx-7-tw-5, 10, 3,3, cc);                               // status dot left of the chip text
+  const C=P.pal, L=d.limits||{};
+  chrome(P, 'USAGE LIMITS', '');
+  const accts=(L.accounts&&L.accounts.length)?L.accounts.slice(0,4):null;
+  const frac=u=>u!=null?Math.max(0,Math.min(1,u/100)):0, pct=u=>u!=null?Math.round(u)+'%':'-';
+  if(!accts){  // legacy single-account (or empty) shape
+    const sess=L.session||{}, wk=L.weekly||{};
+    seclabel(P, 'YOUR USAGE', SECLABEL_Y);
+    barRow(P, 48, 'SESSION', frac(sess.utilization), pct(sess.utilization), 1, sess.resets_at?('RESETS '+fmtReset(secFrom(sess))):null);
+    barRow(P, 82, 'WEEKLY',  frac(wk.utilization),   pct(wk.utilization),   2, wk.resets_at?('RESETS '+fmtReset(secFrom(wk))):null);
+    return;
   }
-  // YOUR USAGE — SESSION (Accent 1) + WEEKLY (Accent 2) utilization bar-rows (label + bar + pct)
-  seclabel(P, 'YOUR USAGE', SECLABEL_Y);
-  const sp=sess.utilization, wp=wk.utilization;
-  barRow(P, 48, 'SESSION', sp!=null?Math.max(0,Math.min(1,sp/100)):0, sp!=null?Math.round(sp)+'%':'-', 1);
-  barRow(P, 70, 'WEEKLY',  wp!=null?Math.max(0,Math.min(1,wp/100)):0, wp!=null?Math.round(wp)+'%':'-', 2);
-  // OPPONENT USAGE — a rival's session/weekly bars (+ reset countdown under each label), shown only with a peer
-  const rival=(d.competition&&d.competition.peers&&d.competition.peers[0])||null, rvLim=(rival&&rival.limits)||null;
-  if(rvLim){
-    seclabel(P, 'OPPONENT USAGE', 94);
-    // stale rival data: resets_at stays correct until it passes, so keep the countdown ticking while it's
-    // still in the future — but once it expires a fresh read would have delivered the NEXT window's
-    // resets_at, which stale data can't, so blank it ('-') instead of pinning at 'NOW' forever.
-    // Two stale layers, same symptom: our pull of his feed failing (_fetch.ok=false), and his own limits
-    // poller serving last-known values because he hasn't run Claude Code lately (limits.stale=true).
-    const rvStale=!!((rival._fetch && rival._fetch.ok===false) || rvLim.stale);
-    const rvReset=b=>{ const s=secFrom(b); return (rvStale && s!=null && s<=0) ? '-' : fmtReset(s); };
-    oppRow(P, 110, 'SESSION', (rvLim.session||{}).utilization, rvReset(rvLim.session), 1);
-    oppRow(P, 134, 'WEEKLY',  (rvLim.weekly||{}).utilization,  rvReset(rvLim.weekly),  2);
+  // one block per Claude account: LABEL header + SESSION + WEEKLY utilization bars
+  const n=accts.length, top=SECLABEL_Y+6, avail=236-top, blk=Math.floor(avail/n);
+  for(let i=0;i<n;i++){
+    const a=accts[i], sess=a.session||{}, wk=a.weekly||{}, y=top+i*blk;
+    const sub=a.subscription?(' '+String(a.subscription).toUpperCase()):'';
+    seclabel(P, (a.label||'ACCOUNT').toUpperCase()+sub+(a.stale?' · HELD':''), y);
+    barRow(P, y+14, 'SESSION', frac(sess.utilization), pct(sess.utilization), 1);
+    barRow(P, y+30, 'WEEKLY',  frac(wk.utilization),   pct(wk.utilization),   2,
+           blk>=54?('SESS '+fmtReset(secFrom(sess))+'   WK '+fmtReset(secFrom(wk))):null);
   }
-  // RESETS — my reset countdowns, pinned to the bottom (like /view's margin-top:auto)
-  seclabel(P, 'RESETS', 171);
-  const cw=cols(6, 308, 2, 8), cy=187;
-  card(P, cw[0].x, cy, cw[0].w, 'SESSION RESET', fmtReset(secFrom(sess)), 1);
-  card(P, cw[1].x, cy, cw[1].w, 'WEEKLY RESET',  fmtReset(secFrom(wk)),   2);
 }
 
 /* ---------- TOKEN USAGE — hero total + 30d trend sparkline + COST/CACHE cards ---------- */
