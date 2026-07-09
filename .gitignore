@@ -18,6 +18,8 @@ __pycache__/
 *.pyc
 *.uf2
 .DS_Store
+# On-device app backup pulled off a badge before removal (local restore copy)
+.badger-backup/
 
 # ── Server-side: per-machine config, secrets, generated data ──
 # The pipeline runs from /opt/claude-stats and /var/www/stats (outside the repo); these guards
