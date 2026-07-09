@@ -205,7 +205,7 @@ def project_name(mode, configured_name, cwd):
          `cwd` recorded in the transcript (its basename), so several projects under ONE user each get
          their own row. Falls back to the user name if a transcript carries no cwd."""
     if mode == "directory" and cwd:
-        base = os.path.basename(cwd.rstrip("/"))
+        base = cwd.replace("\\", "/").rstrip("/").split("/")[-1]
         if base:
             return base
     return configured_name
