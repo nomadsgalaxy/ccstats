@@ -125,7 +125,7 @@ def load_sprites():
     sprites = []
     for path in sorted(glob.glob(os.path.join(art_directory, "*.py"))):
         namespace = {}
-        with open(path) as art_file:
+        with open(path, encoding="utf-8") as art_file:
             exec(art_file.read(), namespace)  # noqa: S102 -- our own data modules
         sprite = namespace["SPRITE"]
         for required in ("name", "label", "roster_index", "grid_cells", "sweat_anchor", "layers"):
@@ -247,7 +247,9 @@ HOP_FRAMES = (
 )
 """ % (sprite["label"], emit_frames(float_frames(sprite)).replace("        (", "    ("),
        emit_frames(hop_frames(sprite)).replace("        (", "    ("))
-    with open(target, "w") as handle:
+    # utf-8 + LF explicitly: the em dashes in the header must not become cp1252
+    # on Windows, and .gitattributes pins *.py to LF (text-mode write would CRLF)
+    with open(target, "w", encoding="utf-8", newline="\n") as handle:
         handle.write(body)
     return target
 
@@ -318,7 +320,7 @@ def sprite(name):
        ", ".join('"%s"' % sprite["name"] for sprite in sprites)
        + ("," if len(sprites) == 1 else ""),
        "\n".join(emit_metadata(sprite) for sprite in sprites))
-    with open(registry, "w") as handle:
+    with open(registry, "w", encoding="utf-8", newline="\n") as handle:
         handle.write(body)
     print("wrote %d sprite modules + the registry (%d float + %d hop frames each)"
           % (len(sprites), FLOAT_FRAME_COUNT, HOP_FRAME_COUNT))
