@@ -28,6 +28,9 @@ APP_FILES = [
     (os.path.join(REPO_ROOT, "firmware", "certificate_authorities.py"), "certificate_authorities.py"),
     (os.path.join(REPO_ROOT, "firmware-badger", "ccfetch.py"), "ccfetch.py"),
     (os.path.join(REPO_ROOT, "firmware-badger", "__init__.py"), "__init__.py"),
+    # The badgewa.re menu lists an app only if <app>/icon.png exists — without
+    # it the app installs fine but never appears in the launcher.
+    (os.path.join(REPO_ROOT, "firmware-badger", "icon.png"), "icon.png"),
 ]
 
 APP_DIR = "/system/apps/ccstats"

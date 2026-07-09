@@ -16,6 +16,7 @@ badge-specific:
 |---|---|
 | `__init__.py` | The app: four screens (**TOKENS / USAGE / ACTIVITY / COST**), button handling, slow-refresh draw. Uses the badgewa.re `run()` framework + `screen`/`color`/`shape`/`io`/`rom_font` API. |
 | `ccfetch.py` | Fetches `claude-stats.json` + `claude-limits.json`, returns a small dict cached in `State` (survives the e-ink deep-sleep/reset power cycle). |
+| `icon.png` | 24×24 launcher icon. **Required** — the badgewa.re `menu` only lists an app whose folder contains an `icon.png`; without it the app installs but never appears in the launcher. |
 | `secrets.example.py` | Template for `secrets.py` (WiFi + server URL/token/alias). |
 
 ## Differences from the LCD build

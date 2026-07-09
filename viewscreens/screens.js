@@ -948,16 +948,24 @@ function drawNextUp(P, d){
 }
 
 /* ---------- AVATAR (LIVE) — the CLAUDE CODE mascot. Representative static (STANDBY) frame; the live
-   status/word-ticker/animation is the firmware's job. Default GLOOM ghost sprite ported to canvas. ---------- */
+   status/word-ticker/animation is the firmware's job. Shows the default sprite — now CLAWD, Claude's
+   little crab (firmware default too); GLOOM the ghost is kept and switchable on the device. ---------- */
+const CLAWD={   // FAITHFUL trace of the real Clawd (tools/sprite_art/clawd.py): flat coral rectangular torso, two
+  // 2px side arms, four legs, and two thin 1x2 dark bar eyes (eyesP only, drawn in bg). No shade/hi, no mouth.
+  fill:[[2,5,11,1],[2,6,11,1],[2,7,11,1],[0,8,15,1],[0,9,15,1],[2,10,11,1],[2,11,11,1],[3,12,1,1],[5,12,1,1],[9,12,1,1],[11,12,1,1],[3,13,1,1],[5,13,1,1],[9,13,1,1],[11,13,1,1]],
+  shade:[], hi:[], eyesW:[], eyesP:[[4,7,1,2],[10,7,1,2]] };
 const GHOST={
   fill:[[5,2,5,1],[4,3,7,1],[3,4,9,1],[2,5,11,1],[2,6,11,1],[2,7,11,1],[2,8,11,1],[2,9,11,1],[2,10,11,1],[2,11,11,1],[2,12,2,2],[5,12,2,2],[8,12,2,2],[11,12,2,2]],
   shade:[[12,5,1,7],[11,12,2,2]], hi:[[4,3,2,1],[3,4,1,2]],
   eyesW:[[4,5,2,3],[9,5,2,3]], eyesP:[[5,6,1,2],[9,6,1,2]] };
-function drawSprite(P, x, y, scale){   // GLOOM ghost, idle frame (fill / shade / highlight / eyes)
-  const C=P.pal;
-  drawGlyph(P, GHOST.fill,  x, y, scale, C.avatar);  drawGlyph(P, GHOST.shade, x, y, scale, C.avatarD);
-  drawGlyph(P, GHOST.hi,    x, y, scale, C.avatarL); drawGlyph(P, GHOST.eyesW, x, y, scale, C.eyeWhite);
-  drawGlyph(P, GHOST.eyesP, x, y, scale, C.bg);
+const AV_SPRITES={ clawd:CLAWD, gloom:GHOST };
+function drawSprite(P, x, y, scale, name){   // default sprite idle frame (fill / shade / highlight / mouth / eyes)
+  const C=P.pal, S=AV_SPRITES[name]||CLAWD;
+  drawGlyph(P, S.fill,  x, y, scale, C.avatar);  drawGlyph(P, S.shade, x, y, scale, C.avatarD);
+  drawGlyph(P, S.hi,    x, y, scale, C.avatarL);
+  if(S.mouth) drawGlyph(P, S.mouth, x, y, scale, C.bg);   // CLAWD's smile (GLOOM has none)
+  drawGlyph(P, S.eyesW, x, y, scale, C.eyeWhite);
+  drawGlyph(P, S.eyesP, x, y, scale, C.bg);
 }
 function drawAvatar(P, d){
   const C=P.pal, L=d.limits||{}, sess=L.session||{}, days=d.daily_activity||[];
@@ -1038,11 +1046,11 @@ function drawOptAvatar(P, d){
   // Mirrors the firmware AVATAR screen (screens_options.draw_options_avatar): the
   // active pick centred over a static mascot, plus the two B-preview instruction
   // lines. The badge opens a live preview on B; /viewscreens is a static picture
-  // of the cycle-OFF state (GLOOM active) and never simulates the press.
+  // of the cycle-OFF state (CLAWD active, the default) and never simulates the press.
   const C=P.pal;
   chrome(P, 'AVATAR', 'OPTIONS');
   seclabel(P, 'AVATAR STYLE', SECLABEL_Y);
-  P.text('GLOOM • ACTIVE', 160, 44, C.cream, 'caption', {sp:1, align:'c'});   // active sprite label
+  P.text('CLAWD • ACTIVE', 160, 44, C.cream, 'caption', {sp:1, align:'c'});   // active sprite label (default = the crab)
   // the mascot, centred on the firmware stage (SPRITE_X 104, SPRITE_Y 86, scale 7)
   const scale=7, gx=104, gy=86;
   // ground shadow (avShadow static frame: width 85, 12px inset, centred x160 y190)

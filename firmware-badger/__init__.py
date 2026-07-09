@@ -30,6 +30,16 @@ SMALL = rom_font.smart    # footer / captions
 
 SCREENS = ("TOKENS", "USAGE", "ACTIVITY", "COST")
 
+# CLAWD, the Claude crab mascot — the same 16-cell art as the LCD build's
+# avatar sprite (tools/sprite_art/clawd.py), a faithful trace of the real Clawd:
+# a rectangular body with two 2px side arms, four legs, and two thin 1x2 bar
+# eyes. Drawn static + mono here — body in ink, the bar eyes knocked out to
+# paper (white) so they read on the black body (the inverse of the LCD/web,
+# where the body is coloured and the eyes are dark). Also the launcher icon.png.
+_CRAB_FILL = ((2, 5, 11, 3), (0, 8, 15, 2), (2, 10, 11, 2),
+              (3, 12, 1, 2), (5, 12, 1, 2), (9, 12, 1, 2), (11, 12, 1, 2))
+_CRAB_EYES = ((4, 7, 1, 2), (10, 7, 1, 2))
+
 state = {"screen": 0, "summary": None, "accounts": [], "error": None, "fetched": ""}
 State.load("ccstats", state)
 
@@ -143,6 +153,25 @@ def _bar(x, y, w, h, pct):
         _fill(x + 2, y + 2, fw, h - 4)
 
 
+def _crab_layer(rects, ox, oy, cell):
+    for x, y, w, h in rects:
+        _fill(ox + x * cell, oy + y * cell, w * cell, h * cell)
+
+
+def _crab(ox, oy, cell):
+    """CLAWD the crab, static + mono, top-left at (ox, oy); each cell is `cell`
+    px (the 16-cell art spans 16 cells * cell). Ink body, paper square eyes."""
+    screen.pen = color.black
+    _crab_layer(_CRAB_FILL, ox, oy, cell)
+    screen.pen = color.white
+    _crab_layer(_CRAB_EYES, ox, oy, cell)
+
+
+def _crab_centered(top_y, cell):
+    # the art is symmetric across the full 16-cell width (hands at both edges)
+    _crab(int((screen.width - 16 * cell) / 2), top_y, cell)
+
+
 def _header(title):
     screen.pen = color.black
     _fill(0, 0, screen.width, 20)
@@ -227,15 +256,17 @@ def _draw():
     d = state.get("summary")
 
     if err and not d:
+        _crab_centered(26, 3)  # small CLAWD above the message
         screen.pen = color.black
-        _center("can't reach server", 64, MED)
-        _center(err, 88, SMALL)
-        _center("press B to retry", 116, SMALL)
+        _center("can't reach server", 82, MED)
+        _center(err, 106, SMALL)
+        _center("press B to retry", 130, SMALL)
         _footer(idx)
         return
     if not d:
+        _crab_centered(34, 4)  # CLAWD greets you on the cold-start screen
         screen.pen = color.black
-        _center("press B to load stats", 84, MED)
+        _center("press B to load stats", 112, MED)
         _footer(idx)
         return
 

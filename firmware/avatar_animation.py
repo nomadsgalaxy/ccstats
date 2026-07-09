@@ -207,7 +207,7 @@ class AvatarAnimator:
         self.connection_online = True   # navigation mirrors the scheduler's error state
         self._was_online = True
         self.stress_override = None     # debug hook (web Tweaks parity): None=auto, 0=off, 1=forced
-        self.sprite_name = "gloom"      # the M5 OPTIONS picker writes this
+        self.sprite_name = "clawd"      # default (CLAWD crab); navigation loads the saved pick over it
         self.visual_state = "standby"   # working | idle | waiting | done | standby
         self.previous_feed_status = None
         self.work_started_ticks = now

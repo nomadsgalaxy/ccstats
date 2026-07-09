@@ -38,9 +38,13 @@ LAYER_EYES_WHITE = 8
 LAYER_EYES_PUPIL = 9
 LAYER_HAPPY = 10
 
-SPRITE_ORDER = ("gloom", "dimple", "volt", "miso", "noodle", "blip", "pip", "jelly", "dapper", "ziggy", "sparkly")
+SPRITE_ORDER = ("clawd", "gloom", "dimple", "volt", "miso", "noodle", "blip", "pip", "jelly", "dapper", "ziggy", "sparkly")
 
 SPRITE_INFO = {
+    "clawd": {
+        "label": "CLAWD",
+        "sweat_anchor": (84, 34),
+    },
     "gloom": {
         "label": "GLOOM",
         "sweat_anchor": (63, 16),
