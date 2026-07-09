@@ -184,7 +184,7 @@ def main():
     patched_source = menu_source.replace(HOOK_LINE, AUTO_BOOT_BLOCK + HOOK_LINE)
     encoded = base64.b64encode(patched_source.encode()).decode()
 
-    with tempfile.NamedTemporaryFile("w", suffix=".py", delete=False) as installer:
+    with tempfile.NamedTemporaryFile("w", suffix=".py", delete=False, encoding="utf-8") as installer:
         installer.write(INSTALLER_TEMPLATE % (encoded, MENU_PATH))
         installer_path = installer.name
     try:

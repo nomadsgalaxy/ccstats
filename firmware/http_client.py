@@ -166,6 +166,7 @@ class PersistentConnection:
 
         content_length = None
         server_will_close = False
+        chunked = False
         while True:
             header_line = self._socket.readline()
             if not header_line:
@@ -178,19 +179,59 @@ class PersistentConnection:
             elif header_lower.startswith(b"connection:") and b"close" in header_lower:
                 server_will_close = True
             elif header_lower.startswith(b"transfer-encoding:") and b"chunked" in header_lower:
-                # nginx frames static files (our feeds) with Content-Length;
-                # chunked would mean a different server — fail loudly.
-                raise HttpError("chunked responses are not supported")
-        if content_length is None:
-            raise HttpError("response has no content-length")
+                # The origin (nginx) frames the feeds with Content-Length, but a
+                # CDN in front (Cloudflare) re-frames responses — notably its
+                # 404 / error pages — as chunked. Decode them rather than fail:
+                # an optional feed's 404 must stay a clean non-200 the scheduler
+                # skips, not a fake connection error that pins the badge OFFLINE.
+                chunked = True
 
-        body = b""
-        while len(body) < content_length:
-            chunk = self._socket.read(min(RESPONSE_CHUNK_BYTES, content_length - len(body)))
-            if not chunk:
-                raise OSError("connection closed in body")
-            body += chunk
+        if chunked:
+            body = self._read_chunked_body()
+        elif content_length is not None:
+            body = b""
+            while len(body) < content_length:
+                chunk = self._socket.read(min(RESPONSE_CHUNK_BYTES, content_length - len(body)))
+                if not chunk:
+                    raise OSError("connection closed in body")
+                body += chunk
+        else:
+            raise HttpError("response has neither content-length nor chunked framing")
 
         if server_will_close:
             self.close()
         return status_code, body
+
+    def _read_chunked_body(self):
+        """Decode an HTTP/1.1 chunked body (RFC 7230 4.1). Only seen from the
+        CDN's error pages; the feeds themselves stay Content-Length framed."""
+        body = b""
+        while True:
+            size_line = self._socket.readline()
+            if not size_line:
+                raise OSError("connection closed in chunk size")
+            size_field = size_line.split(b";", 1)[0].strip()  # drop any chunk-ext
+            try:
+                chunk_size = int(size_field, 16)
+            except ValueError:
+                raise HttpError("bad chunk size: %r" % size_line)
+            if chunk_size == 0:
+                # consume optional trailers up to the terminating blank line
+                while True:
+                    trailer = self._socket.readline()
+                    if not trailer or trailer == b"\r\n":
+                        break
+                return body
+            remaining = chunk_size
+            while remaining > 0:
+                piece = self._socket.read(min(RESPONSE_CHUNK_BYTES, remaining))
+                if not piece:
+                    raise OSError("connection closed in chunk body")
+                body += piece
+                remaining -= len(piece)
+            terminator = b""
+            while len(terminator) < 2:  # the CRLF trailing each chunk's data
+                more = self._socket.read(2 - len(terminator))
+                if not more:
+                    raise OSError("connection closed at chunk terminator")
+                terminator += more

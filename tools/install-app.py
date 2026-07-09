@@ -162,7 +162,7 @@ def main():
     chunks.append(INSTALLER_STALE_SWEEP)
     chunks.append(INSTALLER_LAUNCH_MARKER)
 
-    with tempfile.NamedTemporaryFile("w", suffix=".py", delete=False) as installer:
+    with tempfile.NamedTemporaryFile("w", suffix=".py", delete=False, encoding="utf-8") as installer:
         installer.write("".join(chunks))
         installer_path = installer.name
     try:
