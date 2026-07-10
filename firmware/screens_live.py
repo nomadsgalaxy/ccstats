@@ -203,12 +203,47 @@ def _opponent_row(P, y, label, utilization, reset_text, accent_number):
     P.text(_percent_text(utilization), ROW_VALUE_RIGHT, y, accent, "row_value", align="r")
 
 
+def _draw_usage_accounts(P, accounts):
+    # One SESSION/WEEKLY block per Claude account (multi-account limits feed).
+    # 1:1 mirror of viewscreens/screens.js drawUsage accounts loop.
+    count = len(accounts)
+    top = SECTION_LABEL_Y + 6
+    available = 236 - top
+    block = available // count
+    for index in range(count):
+        account = accounts[index]
+        session = account.get("session") or {}
+        weekly = account.get("weekly") or {}
+        y = top + index * block
+        label = (account.get("label") or "ACCOUNT").upper()
+        subscription = account.get("subscription")
+        if subscription:
+            label += " " + str(subscription).upper()
+        if account.get("stale"):
+            label += " · HELD"  # mirrors dashboard; if the label font lacks U+00B7, use " HELD"
+        draw_section_label(P, label[:26], y)
+        draw_bar_row(P, y + 14, "SESSION", _utilization_fraction(session.get("utilization")),
+                     _percent_text(session.get("utilization")), 1)
+        weekly_sub = None
+        if block >= 54:
+            weekly_sub = ("SESS " + format_reset(seconds_until_reset(session)) +
+                          "  WK " + format_reset(seconds_until_reset(weekly)))
+        draw_bar_row(P, y + 30, "WEEKLY", _utilization_fraction(weekly.get("utilization")),
+                     _percent_text(weekly.get("utilization")), 2, sub_line_1=weekly_sub)
+
+
 def draw_usage(P, stats_payload):
     limits = stats_payload.get("limits") or {}
-    session = limits.get("session") or {}
-    weekly = limits.get("weekly") or {}
 
     draw_chrome(P, "USAGE LIMITS", "")  # top-right intentionally blank
+
+    accounts = limits.get("accounts")
+    if accounts:
+        _draw_usage_accounts(P, accounts[:4])
+        return
+
+    session = limits.get("session") or {}
+    weekly = limits.get("weekly") or {}
 
     # YOUR USAGE — SESSION (accent 1) + WEEKLY (accent 2) utilization bars
     draw_section_label(P, "YOUR USAGE", SECTION_LABEL_Y)
