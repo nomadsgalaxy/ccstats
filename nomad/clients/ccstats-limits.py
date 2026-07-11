@@ -60,7 +60,9 @@ def main():
         out("no account uuid in profile"); return 0
     reading = {
         "account_uuid": uuid,
-        "label": acct.get("display_name") or acct.get("full_name") or "account",
+        # Label comes from the MACHINE (CCSTATS_LABEL, else the machine name) — not the
+        # account's own profile name — so each row reads as the machine/context it's used on.
+        "label": os.environ.get("CCSTATS_LABEL") or MACHINE.replace("-", " ").title(),
         "subscription": ("max" if acct.get("has_claude_max")
                          else "pro" if acct.get("has_claude_pro")
                          else (o.get("subscriptionType") or "?")),
